@@ -28,16 +28,26 @@ for codigo in codigos_comparativo:
 
     # Verificar se ambos os códigos existem nas planilhas
     if not linha_atualizar.empty and not linha_atualizado.empty:
-        for coluna in colunas_para_comparar:
-            valor_atualizar = linha_atualizar[coluna].values[0]  # Valor na planilha "atualizar"
-            valor_atualizado = linha_atualizado[coluna].values[0]  # Valor na planilha "atualizado"
+        linha_atualizar = linha_atualizar.iloc[0]  # Garantir que pegamos a linha como série
+        linha_atualizado = linha_atualizado.iloc[0]
 
-            # Comparar os valores
-            if valor_atualizar != valor_atualizado:
+        # Comparar os valores de cada coluna
+        for coluna in colunas_para_comparar:
+            valor_atualizar = linha_atualizar[coluna]
+            valor_atualizado = linha_atualizado[coluna]
+
+            # Comparar os valores (considerando valores nulos)
+            if pd.isna(valor_atualizar) and pd.isna(valor_atualizado):
+                continue  # Ambos são NaN, considera igual
+            elif valor_atualizar != valor_atualizado:
+                # Identificar a célula (coluna e linha)
+                indice_linha = linha_atualizar.name + 2  # +2 porque no Excel começa na linha 2
+                identificador_diferenca = f"{coluna}{indice_linha}"
+
                 # Adicionar a diferença ao DataFrame
                 diferencas.append({
                     "codigo": codigo,
-                    "coluna": coluna,
+                    "diferenca": identificador_diferenca,
                     "valor_atualizado": valor_atualizado,
                     "valor_atualizar": valor_atualizar
                 })
