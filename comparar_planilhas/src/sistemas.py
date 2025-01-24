@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Carregar o arquivo Excel
-arquivo = "/home/mors/Documentos/GitHub/python/SISSER.xlsx"
+arquivo = "python/comparar_planilhas/SISSER.xlsx"
 atualizar = pd.read_excel(arquivo, sheet_name="atualizar")
 atualizado = pd.read_excel(arquivo, sheet_name="atualizado")
 
