@@ -2,36 +2,51 @@ import pandas as pd
 
 # Carregar o arquivo Excel
 arquivo = "python/comparar_planilhas/SISSER.xlsx"
+comparativo = pd.read_excel(arquivo, sheet_name="comparativo")
 atualizar = pd.read_excel(arquivo, sheet_name="atualizar")
 atualizado = pd.read_excel(arquivo, sheet_name="atualizado")
 
-# Mostrar as colunas para verificar os nomes
-print("Colunas disponíveis na planilha 'atualizar':", atualizar.columns)
-
 # Remover espaços nos nomes das colunas
+comparativo.columns = comparativo.columns.str.strip()
 atualizar.columns = atualizar.columns.str.strip()
 atualizado.columns = atualizado.columns.str.strip()
 
-# Acessar a coluna correta
-nomes_atualizar = atualizar["codigo"]
-nomes_atualizado = atualizado["codigo"]
+# Garantir que estamos lidando com os códigos corretamente
+codigos_comparativo = comparativo["codigo"]
 
-# Encontrar os nomes em comum
-nomes_em_comum = nomes_atualizar[nomes_atualizar.isin(nomes_atualizado)]
+# Lista de colunas a serem comparadas (C até AY)
+colunas_para_comparar = atualizar.columns[2:]  # Colunas da 3ª em diante (C até AY)
 
-# Criar a planilha "comparativo"
-comparativo = pd.DataFrame(nomes_em_comum, columns=["codigo"])
+# DataFrame para armazenar as diferenças
+diferencas = []
 
-# Encontrar os nomes que estão em "atualizado" mas não em "atualizar"
-nomes_nao_localizados = nomes_atualizado[~nomes_atualizado.isin(nomes_atualizar)]
+# Comparar as colunas para os códigos em "comparativo"
+for codigo in codigos_comparativo:
+    # Filtrar as linhas correspondentes ao código em cada planilha
+    linha_atualizar = atualizar[atualizar["codigo"] == codigo]
+    linha_atualizado = atualizado[atualizado["codigo"] == codigo]
 
-# Criar a planilha "nlocalizado"
-nlocalizado = pd.DataFrame(nomes_nao_localizados, columns=["codigo"])
+    # Verificar se ambos os códigos existem nas planilhas
+    if not linha_atualizar.empty and not linha_atualizado.empty:
+        for coluna in colunas_para_comparar:
+            valor_atualizar = linha_atualizar[coluna].values[0]  # Valor na planilha "atualizar"
+            valor_atualizado = linha_atualizado[coluna].values[0]  # Valor na planilha "atualizado"
 
-# Salvar o resultado no Excel (sobrescrevendo ou criando novas abas)
+            # Comparar os valores
+            if valor_atualizar != valor_atualizado:
+                # Adicionar a diferença ao DataFrame
+                diferencas.append({
+                    "codigo": codigo,
+                    "coluna": coluna,
+                    "valor_atualizado": valor_atualizado,
+                    "valor_atualizar": valor_atualizar
+                })
+
+# Converter a lista de diferenças em um DataFrame
+para_atualizar = pd.DataFrame(diferencas)
+
+# Salvar o resultado na nova planilha "paraAtualizar"
 with pd.ExcelWriter(arquivo, mode="a", engine="openpyxl", if_sheet_exists="replace") as writer:
-    comparativo.to_excel(writer, sheet_name="comparativo", index=False)
-    nlocalizado.to_excel(writer, sheet_name="nlocalizado", index=False)
+    para_atualizar.to_excel(writer, sheet_name="paraAtualizar", index=False)
 
-print(f"Comparação concluída! Planilha 'comparativo' salva com {len(comparativo)} nomes.")
-print(f"Planilha 'nlocalizado' criada com {len(nlocalizado)} nomes que estão em 'atualizado', mas não em 'atualizar'.")
+print(f"Planilha 'paraAtualizar' criada com {len(para_atualizar)} diferenças encontradas!")
