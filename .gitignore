@@ -159,4 +159,4 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-python/comparar_planilhas/SISSER.xlsx
+python/comparar_planilhas/*.xlsx
